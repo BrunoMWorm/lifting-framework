@@ -1,63 +1,75 @@
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Rewriting.RewriteScript where
 
 import qualified GHC.Paths
 import Retrie
-  ( Annotated (astA),
-    FastString,
-    GenLocated (L),
-    HoleVal (HoleExpr),
-    HsExpr (HsLit),
-    HsLit (HsString),
-    MatchResult (MatchResult, NoMatch),
-    MatchResultTransformer,
-    RewriteSpec (Adhoc),
-    apply,
-    extendSubst,
-    lookupSubst,
-    parseExpr,
-    parseRewrites,
-    runScript,
-    setRewriteTransformer,
-    unpackFS,
-  )
+import Retrie.ExactPrint
+import Rewriting.TermMapping
 
--- | A script for rewriting calls to a function that takes a string to be
--- calls to a new function that takes an enumeration. See the README for
--- details. Running this would result in the following diff:
---
---  module MyModule where
---
---  baz, bar, quux :: IO ()
--- -baz = fooOld "foo"
--- +baz = fooNew Foo
--- -bar = fooOld "bar"
--- +bar = fooNew Bar
--- -quux = fooOld "quux"
--- +quux = fooNew (error "invalid argument: quux")
+-- The entrypoint rule matches all expressions in the target module. All expressions
+-- are rewritten into their corresponding monadified versions.
+
+-- In the `MatchResultTransformer` is where we define exactly how to create their corresponding monadified
+-- versions.
 main :: IO ()
 main = runScript GHC.Paths.libdir $ \opts -> do
-  [rewrite] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall arg. fooOld arg = fooNew arg"]
-  return $ apply [setRewriteTransformer stringToFooArg rewrite]
+  [rewrite] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = monadifiedExpr"]
+  return $ apply [setRewriteTransformer exprMonadifier rewrite]
 
-argMapping :: [(FastString, String)]
-argMapping = [("foo", "Foo"), ("bar", "Bar")]
+exprMonadifier :: MatchResultTransformer
+exprMonadifier _ match@(MatchResult substitution template) = case lookupSubst "expr" substitution of
+  Just (HoleExpr expr) -> case constructRawMonadifiedExpression expr of
+    Just rawMonadifiedExpr -> do
+      parsedMonadifiedExpr <- parseExpr GHC.Paths.libdir rawMonadifiedExpr
+      return $ MatchResult (extendSubst substitution "monadifiedExpr" (HoleExpr parsedMonadifiedExpr)) template
+    Nothing -> do
+      print "Failed to construct the monadified version of the current expression."
+      return NoMatch
+  Nothing -> do
+    print "HoleExpr not found. Verify if the rewrite rule in the main function has the correct name of the variable in the 'forall' quantifier."
+    return NoMatch
 
--- | This 'transform' receives the result of matching the left-hand side of the
--- equation. The returned 'MatchResult' is used to instantiate the right-hand
--- side of the equation. In this example we are just modifying the
--- substitution, but you can also modify the template, which contains the
--- right-hand side itself.
-stringToFooArg :: MatchResultTransformer
-stringToFooArg _ctxt match
-  | MatchResult substitution template <- match,
-    Just (HoleExpr expr) <- lookupSubst "arg" substitution,
-    L _ (HsLit _ (HsString _ str)) <- astA expr = do
-      newExpr <- case lookup str argMapping of
-        Nothing ->
-          parseExpr GHC.Paths.libdir $ "error \"invalid argument: " ++ unpackFS str ++ "\""
-        Just constructor -> parseExpr GHC.Paths.libdir constructor
-      return $
-        MatchResult (extendSubst substitution "arg" (HoleExpr newExpr)) template
-  | otherwise = return NoMatch
+-- TODO: construct the initial mapping of the expression.
+-- It is going to be important for them cases where recursion is involved.
+constructRawMonadifiedExpression :: AnnotatedHsExpr -> Maybe String
+constructRawMonadifiedExpression expr = let (L _ hsExpr) = astA expr in monadificationAlgorithm hsExpr emptyMapping
+
+monadificationAlgorithm :: HsExpr GhcPs -> TermMapping -> Maybe String
+monadificationAlgorithm expr termMapping = case expr of
+  (HsLit _ l) -> monadifyLiteral l
+  var@(HsVar _ v) -> monadifyVariable var termMapping
+  app@(HsApp {}) -> monadifyApp app termMapping
+  lambda@(HsLam {}) -> monadifyLambda lambda termMapping
+
+monadifyVariable :: HsExpr GhcPs -> TermMapping -> Maybe String
+monadifyVariable = undefined
+
+monadifyLambda :: HsExpr GhcPs -> TermMapping -> Maybe String
+monadifyLambda = undefined
+
+monadifyApp :: HsExpr GhcPs -> TermMapping -> Maybe String
+monadifyApp = undefined
+
+monadifyLiteral :: HsLit a -> Maybe String
+monadifyLiteral (HsChar _ c) = Just $ wrapIntoReturn (show c)
+monadifyLiteral (HsCharPrim _ c) = Just $ wrapIntoReturn (show c)
+monadifyLiteral (HsString _ s) = Just $ wrapIntoReturn (show s)
+monadifyLiteral (HsStringPrim _ s) = Just $ wrapIntoReturn (show s)
+monadifyLiteral (HsInt _ i) = Just $ wrapIntoReturn (show i)
+monadifyLiteral (HsIntPrim _ i) = Just $ wrapIntoReturn (show i)
+monadifyLiteral (HsInt64Prim _ i) = Just $ wrapIntoReturn (show i)
+monadifyLiteral (HsWordPrim _ i) = Just $ wrapIntoReturn (show i)
+monadifyLiteral (HsWord64Prim _ i) = Just $ wrapIntoReturn (show i)
+-- TODO: Check the third argument for HsInteger
+monadifyLiteral (HsInteger _ i _) = Just $ wrapIntoReturn (show i)
+-- TODO: Check the third argument for HsRat
+monadifyLiteral (HsRat _ r _) = Just $ wrapIntoReturn (show r)
+monadifyLiteral (HsFloatPrim _ f) = Just $ wrapIntoReturn (show f)
+monadifyLiteral (HsDoublePrim _ d) = Just $ wrapIntoReturn (show d)
+monadifyLiteral _ = Nothing
+
+wrapIntoReturn :: String -> String
+wrapIntoReturn str = "(return ) " <> str <> ")"
