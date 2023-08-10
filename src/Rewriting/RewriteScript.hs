@@ -4,6 +4,7 @@
 
 module Rewriting.RewriteScript where
 
+import Debug.Trace
 import qualified GHC.Paths
 import Retrie
 import Retrie.ExactPrint
@@ -35,23 +36,26 @@ exprMonadifier _ match@(MatchResult substitution template) = case lookupSubst "e
 -- TODO: construct the initial mapping of the expression.
 -- It is going to be important for them cases where recursion is involved.
 constructRawMonadifiedExpression :: AnnotatedHsExpr -> Maybe String
-constructRawMonadifiedExpression expr = let (L _ hsExpr) = astA expr in monadificationAlgorithm hsExpr emptyMapping
+constructRawMonadifiedExpression expr =
+  let (L _ hsExpr) = astA expr
+   in trace (" # Starting monadification for expression: " <> exactPrint hsExpr) $ monadificationAlgorithm hsExpr emptyMapping
 
 monadificationAlgorithm :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadificationAlgorithm expr termMapping = case expr of
-  (HsLit _ l) -> monadifyLiteral l
-  var@(HsVar _ v) -> monadifyVariable var termMapping
-  app@(HsApp {}) -> monadifyApp app termMapping
-  lambda@(HsLam {}) -> monadifyLambda lambda termMapping
+  lit@(HsLit _ l) -> trace (" ## Monadifying literal: " <> exactPrint lit) $ monadifyLiteral l
+  var@(HsVar _ v) -> trace (" ## Monadifying variable: " <> exactPrint var) monadifyVariable var termMapping
+  app@(HsApp {}) -> trace (" ## Monadifying application: " <> exactPrint app) monadifyApp app termMapping
+  lambda@(HsLam {}) -> trace (" ## Monadifying lambda: " <> exactPrint lambda) monadifyLambda lambda termMapping
+  _ -> Nothing
 
 monadifyVariable :: HsExpr GhcPs -> TermMapping -> Maybe String
-monadifyVariable = undefined
+monadifyVariable _ _ = Nothing
 
 monadifyLambda :: HsExpr GhcPs -> TermMapping -> Maybe String
-monadifyLambda = undefined
+monadifyLambda _ _ = Nothing
 
 monadifyApp :: HsExpr GhcPs -> TermMapping -> Maybe String
-monadifyApp = undefined
+monadifyApp _ _ = Nothing
 
 monadifyLiteral :: HsLit a -> Maybe String
 monadifyLiteral (HsChar _ c) = Just $ wrapIntoReturn (show c)
@@ -72,4 +76,4 @@ monadifyLiteral (HsDoublePrim _ d) = Just $ wrapIntoReturn (show d)
 monadifyLiteral _ = Nothing
 
 wrapIntoReturn :: String -> String
-wrapIntoReturn str = "(return ) " <> str <> ")"
+wrapIntoReturn str = "(return " <> str <> ")"

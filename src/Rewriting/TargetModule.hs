@@ -7,3 +7,9 @@
 module Rewriting.TargetModule where
 
 plus = \a -> \b -> \c -> a + b + c
+
+someInt = 123
+
+someString = "foobar"
+
+someDouble = 1.2341

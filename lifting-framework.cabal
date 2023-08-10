@@ -14,6 +14,7 @@ library
         Memoization.Core.State
         Memoization.Core.Memory
         Rewriting.RewriteScript
+        Rewriting.TermMapping
         Variability.VarTypes
         Language.Frontend.TestLanguage
         Language.Frontend.ErrM
@@ -29,7 +30,6 @@ library
         Language.MInterpreter.Interpreter
         Language.VInterpreter.Driver
         Language.VInterpreter.Interpreter
-
 
     other-extensions:
         InstanceSigs TupleSections FlexibleInstances LambdaCase
