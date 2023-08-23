@@ -27,10 +27,10 @@ exprMonadifier _ match@(MatchResult substitution template) = case lookupSubst "e
       parsedMonadifiedExpr <- parseExpr GHC.Paths.libdir rawMonadifiedExpr
       return $ MatchResult (extendSubst substitution "monadifiedExpr" (HoleExpr parsedMonadifiedExpr)) template
     Nothing -> do
-      print "Failed to construct the monadified version of the current expression."
+      print " !! Failed to construct the monadified version of the current expression."
       return NoMatch
   Nothing -> do
-    print "HoleExpr not found. Verify if the rewrite rule in the main function has the correct name of the variable in the 'forall' quantifier."
+    print " !! HoleExpr not found. Verify if the rewrite rule in the main function has the correct name of the variable in the 'forall' quantifier."
     return NoMatch
 
 -- TODO: insert the name of the function being rewritten into the initial mapping.
@@ -68,7 +68,15 @@ monadifyVariable (HsVar _ (L _ name)) mapping =
         Just result
 
 monadifyLambda :: HsExpr GhcPs -> TermMapping -> Maybe String
-monadifyLambda _ _ = Nothing
+monadifyLambda (HsLam _ (MG _ (L _ [L _ l]) _)) mapping =
+  let (L _ (GRHS _ _ body@(L _ bodyExpr))) = head (grhssGRHSs (m_grhss l))
+      param = head (m_pats l)
+      paramStr = show (ppr param)
+   in trace
+        (" ### Inside lambda monadification: " <> show (ppr body))
+        $ do
+          monadifiedBody <- monadificationAlgorithm bodyExpr mapping
+          Just $ wrapIntoReturn ("\\" <> paramStr <> " -> " <> monadifiedBody)
 
 monadifyApp :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyApp (HsApp _ (L _ f) (L _ a)) mapping = do

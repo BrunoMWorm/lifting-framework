@@ -9,14 +9,21 @@ module Rewriting.TargetModule where
 
 import Memoization.Core.State
 
+-- plusApp :: Num a => a -> a -> a
+plusApp a b = (+) a b
+
+-- plusInfix :: Num n => n -> n -> n
+plusInfix a b = a + b
+
+-- someString :: String
+someString = "foobar"
+
+plusLambda :: Integer -> Integer -> Integer
+plusLambda = \a -> \b -> (+) a b
+
+
 -- plusM :: (Monad m, Num a) => m (a -> m (a -> m a))
 -- plusM = return (\a -> return (\b -> return (a + b)))
-
--- plusApp :: Num a => a -> a -> a
--- plusApp a b = (+) a b
-
-plusInfix :: Num n => n -> n -> n
-plusInfix a b = a + b
 
 -- plusInfixM ::
 --   (Num n) =>
@@ -26,9 +33,6 @@ plusInfix a b = a + b
 -- plusInfixM :: Num a => State m (a -> State m (a -> State m a))
 -- plusInfixM = return (\a -> return (\b -> plusM <.> return a <.> return b))
 
--- someString :: String
--- someString = "foobar"
 
--- plusLambda = \a -> \b -> (+) a b
 -- someInt = 123
 -- someDouble = 1.2341
