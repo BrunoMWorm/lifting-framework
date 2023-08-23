@@ -33,12 +33,12 @@ exprMonadifier _ match@(MatchResult substitution template) = case lookupSubst "e
     print "HoleExpr not found. Verify if the rewrite rule in the main function has the correct name of the variable in the 'forall' quantifier."
     return NoMatch
 
--- TODO: construct the initial mapping of the expression.
+-- TODO: insert the name of the function being rewritten into the initial mapping.
 -- It is going to be important for them cases where recursion is involved.
 constructRawMonadifiedExpression :: AnnotatedHsExpr -> Maybe String
 constructRawMonadifiedExpression expr =
   let (L _ hsExpr) = astA expr
-   in trace (" # Starting monadification for expression: " <> exactPrint hsExpr) $ monadificationAlgorithm hsExpr emptyMapping
+   in trace (" # Starting monadification for expression: " <> exactPrint hsExpr) $ monadificationAlgorithm hsExpr initialMapping
 
 monadificationAlgorithm :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadificationAlgorithm expr termMapping = case expr of
@@ -46,16 +46,35 @@ monadificationAlgorithm expr termMapping = case expr of
   var@(HsVar _ v) -> trace (" ## Monadifying variable: " <> exactPrint var) monadifyVariable var termMapping
   app@(HsApp {}) -> trace (" ## Monadifying application: " <> exactPrint app) monadifyApp app termMapping
   lambda@(HsLam {}) -> trace (" ## Monadifying lambda: " <> exactPrint lambda) monadifyLambda lambda termMapping
-  _ -> Nothing
+  opApp@(OpApp _ op a b) -> trace (" ## Monadifying literal: " <> exactPrint opApp) $ monadifyOpApp opApp termMapping
+  x -> trace (" ## Monadifying something: " <> exactPrint x) Nothing
+
+monadifyOpApp :: HsExpr GhcPs -> TermMapping -> Maybe String
+monadifyOpApp (OpApp _ (L _ leftExpr) (L _ op) (L _ rightExpr)) mapping = do
+  leftExprM <- monadificationAlgorithm leftExpr mapping
+  monadifiedOp <- lookupMonadifiedOperator op mapping
+  rightExprM <- monadificationAlgorithm rightExpr mapping
+  Just $ wrapIntoParenthesis (monadifiedOp <> " <.> " <> leftExprM <> " <.> " <> rightExprM)
+
+lookupMonadifiedOperator :: HsExpr GhcPs -> TermMapping -> Maybe String
+lookupMonadifiedOperator (HsVar _ (L _ opName)) =
+  trace (" ## LookupMoniadifiedOperator: " <> show (ppr opName)) $
+    lookupTerm (show (ppr opName))
 
 monadifyVariable :: HsExpr GhcPs -> TermMapping -> Maybe String
-monadifyVariable _ _ = Nothing
+monadifyVariable (HsVar _ (L _ name)) mapping =
+  let result = wrapIntoReturn ("(" <> show (ppr name) <> ")")
+   in trace (" ### Variable monadification result: " <> result) $
+        Just result
 
 monadifyLambda :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyLambda _ _ = Nothing
 
 monadifyApp :: HsExpr GhcPs -> TermMapping -> Maybe String
-monadifyApp _ _ = Nothing
+monadifyApp (HsApp _ (L _ f) (L _ a)) mapping = do
+  fM <- monadificationAlgorithm f mapping
+  aM <- monadificationAlgorithm a mapping
+  Just $ wrapIntoParenthesis (fM <> "<.>" <> aM)
 
 monadifyLiteral :: HsLit a -> Maybe String
 monadifyLiteral (HsChar _ c) = Just $ wrapIntoReturn (show c)
@@ -76,4 +95,7 @@ monadifyLiteral (HsDoublePrim _ d) = Just $ wrapIntoReturn (show d)
 monadifyLiteral _ = Nothing
 
 wrapIntoReturn :: String -> String
-wrapIntoReturn str = "(return " <> str <> ")"
+wrapIntoReturn str = wrapIntoParenthesis ("return " <> str)
+
+wrapIntoParenthesis :: String -> String
+wrapIntoParenthesis str = "(" <> str <> ")"

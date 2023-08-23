@@ -6,11 +6,16 @@ import Data.Maybe (listToMaybe)
 -- term mapping.
 -- We only parse this raw expressions when doing the actual substitution in the `MatchResultTransformer`.
 type RawMonadifiedExpression = String
+
 type Term = String
+
 type TermMapping = [(Term, RawMonadifiedExpression)]
 
-emptyMapping :: TermMapping
-emptyMapping = []
+-- Mapping containing the monadified version of core functions and operators
+initialMapping :: TermMapping
+initialMapping =
+  [ ("+", "(return (\\a -> return (\\b -> return (a + b))))")
+  ]
 
 lookupTerm :: Term -> TermMapping -> Maybe RawMonadifiedExpression
 lookupTerm term mapping = listToMaybe $ map snd (filter ((term ==) . fst) mapping)
