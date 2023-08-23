@@ -5,6 +5,8 @@ version:            0.1.0.0
 author:             BrunoMWorm
 maintainer:         brunomatissek.worm@gmail.com
 
+build-tools:         alex, happy
+
 extra-source-files:
     CHANGELOG.md
     README.md
