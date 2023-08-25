@@ -18,21 +18,44 @@ plusInfix a b = a + b
 -- someString :: String
 someString = "foobar"
 
-plusLambda :: Integer -> Integer -> Integer
+-- plusLambda :: Integer -> Integer -> Integer
 plusLambda = \a -> \b -> (+) a b
 
+-- plusLambdaM ::
+--   State
+--     m
+--     ( Integer ->
+--       State m (Integer -> State m Integer)
+--     )
+-- plusLambdaM = return (\a -> (return (\b -> (((return (\a -> return (\b -> return (a + b)))) <.> (return (a))) <.> (return (b))))))
 
--- plusM :: (Monad m, Num a) => m (a -> m (a -> m a))
--- plusM = return (\a -> return (\b -> return (a + b)))
+-- someStringM :: State m String
+-- someStringM = return "foobar"
 
 -- plusInfixM ::
---   (Num n) =>
---   State m (n -> State m (n -> State m n))
--- plusInfixM = return (\x -> return (\y -> (return (\a -> return (\b -> return (a + b)))) <.> (return (x)) <.> (return (y))))
+--   State
+--     m
+--     ( Integer ->
+--       State m (Integer -> State m Integer)
+--     )
+-- plusInfixM = return (\a -> return (\b -> ((return (\a -> return (\b -> return (a + b)))) <.> (return (a)) <.> (return (b)))))
 
--- plusInfixM :: Num a => State m (a -> State m (a -> State m a))
--- plusInfixM = return (\a -> return (\b -> plusM <.> return a <.> return b))
+-- plusAppM ::
+--   State
+--     m
+--     ( Integer ->
+--       State m (Integer -> State m Integer)
+--     )
+-- plusAppM = return (\a -> return (\b -> ((return (\a -> return (\b -> return (a + b)))) <.> (return (a))) <.> (return (b))))
 
+-- cmap :: (a -> b) -> [a] -> [b]
+-- cmap _ [] = []
+-- cmap f (x : xs) = f x : map f xs
 
--- someInt = 123
--- someDouble = 1.2341
+-- -- Esta função foi extraída para não termos que lidar ainda com a regra lambda de reescrita, que
+-- -- é um pouco chatinha...
+-- applyFToRange :: (Num a, Enum a) => (a -> b) -> a -> [b]
+-- applyFToRange f n = cmap f [0 .. n]
+
+-- fib :: Int -> Int
+-- fib n = 1 + sum (applyFToRange fib (n - 2))

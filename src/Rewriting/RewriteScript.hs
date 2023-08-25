@@ -4,11 +4,13 @@
 
 module Rewriting.RewriteScript where
 
+import qualified Data.String
 import Debug.Trace
 import qualified GHC.Paths
 import Retrie
 import Retrie.ExactPrint
 import Rewriting.TermMapping
+import Text.Read (Lexeme (String))
 
 -- The entrypoint rule matches all expressions in the target module. All expressions
 -- are rewritten into their corresponding monadified versions.
@@ -46,26 +48,29 @@ monadificationAlgorithm expr termMapping = case expr of
   var@(HsVar _ v) -> trace (" ## Monadifying variable: " <> exactPrint var) monadifyVariable var termMapping
   app@(HsApp {}) -> trace (" ## Monadifying application: " <> exactPrint app) monadifyApp app termMapping
   lambda@(HsLam {}) -> trace (" ## Monadifying lambda: " <> exactPrint lambda) monadifyLambda lambda termMapping
-  opApp@(OpApp _ op a b) -> trace (" ## Monadifying literal: " <> exactPrint opApp) $ monadifyOpApp opApp termMapping
+  opApp@(OpApp _ op a b) -> trace (" ## Monadifying infix operator application: " <> exactPrint opApp) $ monadifyOpApp opApp termMapping
   x -> trace (" ## Monadifying something: " <> exactPrint x) Nothing
 
 monadifyOpApp :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyOpApp (OpApp _ (L _ leftExpr) (L _ op) (L _ rightExpr)) mapping = do
   leftExprM <- monadificationAlgorithm leftExpr mapping
-  monadifiedOp <- lookupMonadifiedOperator op mapping
+  monadifiedOp <- lookupVariable op mapping
   rightExprM <- monadificationAlgorithm rightExpr mapping
   Just $ wrapIntoParenthesis (monadifiedOp <> " <.> " <> leftExprM <> " <.> " <> rightExprM)
 
-lookupMonadifiedOperator :: HsExpr GhcPs -> TermMapping -> Maybe String
-lookupMonadifiedOperator (HsVar _ (L _ opName)) =
-  trace (" ## LookupMoniadifiedOperator: " <> show (ppr opName)) $
-    lookupTerm (show (ppr opName))
+lookupVariable :: HsExpr GhcPs -> TermMapping -> Maybe String
+lookupVariable (HsVar _ (L _ opName)) =
+  trace (" ## Lookup Variable: " <> show (ppr opName)) $
+    -- We remove the parenthesis for the cases where the variable being lookup is a operator. Example: (+)
+    lookupTerm (removeParenthesis (show (ppr opName)))
 
 monadifyVariable :: HsExpr GhcPs -> TermMapping -> Maybe String
-monadifyVariable (HsVar _ (L _ name)) mapping =
-  let result = wrapIntoReturn ("(" <> show (ppr name) <> ")")
-   in trace (" ### Variable monadification result: " <> result) $
-        Just result
+monadifyVariable v@(HsVar _ (L _ name)) mapping = case lookupVariable v mapping of
+  Just match -> Just match
+  Nothing ->
+    let result = wrapIntoReturn ("(" <> show (ppr name) <> ")")
+     in trace (" ### Variable monadification result: " <> result) $
+          Just result
 
 monadifyLambda :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyLambda (HsLam _ (MG _ (L _ [L _ l]) _)) mapping =
@@ -76,7 +81,7 @@ monadifyLambda (HsLam _ (MG _ (L _ [L _ l]) _)) mapping =
         (" ### Inside lambda monadification: " <> show (ppr body))
         $ do
           monadifiedBody <- monadificationAlgorithm bodyExpr mapping
-          Just $ wrapIntoReturn ("\\" <> paramStr <> " -> " <> monadifiedBody)
+          Just $ wrapIntoReturn (wrapIntoParenthesis ("\\" <> paramStr <> " -> " <> monadifiedBody))
 
 monadifyApp :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyApp (HsApp _ (L _ f) (L _ a)) mapping = do
@@ -107,3 +112,6 @@ wrapIntoReturn str = wrapIntoParenthesis ("return " <> str)
 
 wrapIntoParenthesis :: String -> String
 wrapIntoParenthesis str = "(" <> str <> ")"
+
+removeParenthesis :: String -> String
+removeParenthesis = filter (\c -> c `notElem` ['(', ')'])
