@@ -45,6 +45,7 @@ constructRawMonadifiedExpression expr =
 monadificationAlgorithm :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadificationAlgorithm expr termMapping = case expr of
   lit@(HsLit _ l) -> trace (" ## Monadifying literal: " <> exactPrint lit) $ monadifyLiteral l
+  olit@(HsOverLit _ l) -> trace (" ## Monadifying literal: " <> exactPrint olit) $ monadifyOverloadedLiteral l
   var@(HsVar _ v) -> trace (" ## Monadifying variable: " <> exactPrint var) monadifyVariable var termMapping
   app@(HsApp {}) -> trace (" ## Monadifying application: " <> exactPrint app) monadifyApp app termMapping
   lambda@(HsLam {}) -> trace (" ## Monadifying lambda: " <> exactPrint lambda) monadifyLambda lambda termMapping
@@ -89,23 +90,11 @@ monadifyApp (HsApp _ (L _ f) (L _ a)) mapping = do
   aM <- monadificationAlgorithm a mapping
   Just $ wrapIntoParenthesis (fM <> "<.>" <> aM)
 
-monadifyLiteral :: HsLit a -> Maybe String
-monadifyLiteral (HsChar _ c) = Just $ wrapIntoReturn (show c)
-monadifyLiteral (HsCharPrim _ c) = Just $ wrapIntoReturn (show c)
-monadifyLiteral (HsString _ s) = Just $ wrapIntoReturn (show s)
-monadifyLiteral (HsStringPrim _ s) = Just $ wrapIntoReturn (show s)
-monadifyLiteral (HsInt _ i) = Just $ wrapIntoReturn (show i)
-monadifyLiteral (HsIntPrim _ i) = Just $ wrapIntoReturn (show i)
-monadifyLiteral (HsInt64Prim _ i) = Just $ wrapIntoReturn (show i)
-monadifyLiteral (HsWordPrim _ i) = Just $ wrapIntoReturn (show i)
-monadifyLiteral (HsWord64Prim _ i) = Just $ wrapIntoReturn (show i)
--- TODO: Check the third argument for HsInteger
-monadifyLiteral (HsInteger _ i _) = Just $ wrapIntoReturn (show i)
--- TODO: Check the third argument for HsRat
-monadifyLiteral (HsRat _ r _) = Just $ wrapIntoReturn (show r)
-monadifyLiteral (HsFloatPrim _ f) = Just $ wrapIntoReturn (show f)
-monadifyLiteral (HsDoublePrim _ d) = Just $ wrapIntoReturn (show d)
-monadifyLiteral _ = Nothing
+monadifyOverloadedLiteral :: HsOverLit GhcPs -> Maybe String
+monadifyOverloadedLiteral olit = Just $ wrapIntoReturn (show (ppr (ol_val olit)))
+
+monadifyLiteral :: HsLit GhcPs -> Maybe String
+monadifyLiteral lit = Just $ wrapIntoReturn (show (ppr lit))
 
 wrapIntoReturn :: String -> String
 wrapIntoReturn str = wrapIntoParenthesis ("return " <> str)

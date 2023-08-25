@@ -9,17 +9,17 @@ module Rewriting.TargetModule where
 
 import Memoization.Core.State
 
--- plusApp :: Num a => a -> a -> a
-plusApp a b = (+) a b
+-- -- plusApp :: Num a => a -> a -> a
+-- plusApp a b = (+) a b
 
--- plusInfix :: Num n => n -> n -> n
-plusInfix a b = a + b
+-- -- plusInfix :: Num n => n -> n -> n
+-- plusInfix a b = a + b
 
--- someString :: String
-someString = "foobar"
+-- -- someString :: String
+-- someString = "foobar"
 
--- plusLambda :: Integer -> Integer -> Integer
-plusLambda = \a -> \b -> (+) a b
+-- -- plusLambda :: Integer -> Integer -> Integer
+-- plusLambda = \a -> \b -> (+) a b
 
 -- plusLambdaM ::
 --   State
@@ -48,14 +48,10 @@ plusLambda = \a -> \b -> (+) a b
 --     )
 -- plusAppM = return (\a -> return (\b -> ((return (\a -> return (\b -> return (a + b)))) <.> (return (a))) <.> (return (b))))
 
--- cmap :: (a -> b) -> [a] -> [b]
--- cmap _ [] = []
--- cmap f (x : xs) = f x : map f xs
-
--- -- Esta função foi extraída para não termos que lidar ainda com a regra lambda de reescrita, que
+-- Esta função foi extraída para não termos que lidar ainda com a regra lambda de reescrita, que
 -- -- é um pouco chatinha...
 -- applyFToRange :: (Num a, Enum a) => (a -> b) -> a -> [b]
--- applyFToRange f n = cmap f [0 .. n]
+-- applyFToRange f n = map f [0 .. n]
 
 -- fib :: Int -> Int
 -- fib n = 1 + sum (applyFToRange fib (n - 2))
