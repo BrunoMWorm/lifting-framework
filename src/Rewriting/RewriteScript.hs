@@ -11,6 +11,7 @@ import Retrie
 import Retrie.ExactPrint
 import Rewriting.TermMapping
 import Text.Read (Lexeme (String))
+import Data.Data
 
 -- The entrypoint rule matches all expressions in the target module. All expressions
 -- are rewritten into their corresponding monadified versions.
@@ -47,10 +48,12 @@ monadificationAlgorithm expr termMapping = case expr of
   lit@(HsLit _ l) -> trace (" ## Monadifying literal: " <> exactPrint lit) $ monadifyLiteral l
   olit@(HsOverLit _ l) -> trace (" ## Monadifying literal: " <> exactPrint olit) $ monadifyOverloadedLiteral l
   var@(HsVar _ v) -> trace (" ## Monadifying variable: " <> exactPrint var) monadifyVariable var termMapping
+  parExpr@(HsPar _ (L _ p)) -> trace (" ## Monadifying parenthesis expression: " <> exactPrint p) monadificationAlgorithm p termMapping
   app@(HsApp {}) -> trace (" ## Monadifying application: " <> exactPrint app) monadifyApp app termMapping
   lambda@(HsLam {}) -> trace (" ## Monadifying lambda: " <> exactPrint lambda) monadifyLambda lambda termMapping
   opApp@(OpApp _ op a b) -> trace (" ## Monadifying infix operator application: " <> exactPrint opApp) $ monadifyOpApp opApp termMapping
-  x -> trace (" ## Monadifying something: " <> exactPrint x) Nothing
+  ifExpr@(HsIf _ cond thenExpr elseExpr) -> trace (" ## Monadifying if-then-else expression: " <> exactPrint ifExpr) monadifyIfExpr expr termMapping
+  unknownExpr -> trace (" ## Monadifying something (?): " <> show (toConstr unknownExpr)) Nothing
 
 monadifyOpApp :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyOpApp (OpApp _ (L _ leftExpr) (L _ op) (L _ rightExpr)) mapping = do
@@ -73,6 +76,15 @@ monadifyVariable v@(HsVar _ (L _ name)) mapping = case lookupVariable v mapping 
      in trace (" ### Variable monadification result: " <> result) $
           Just result
 
+monadifyIfExpr :: HsExpr GhcPs -> TermMapping -> Maybe String
+monadifyIfExpr ifExpr@(HsIf _ (L _ condExpr) (L _ thenExpr) (L _ elseExpr)) mapping = do
+  condExprM <- monadificationAlgorithm condExpr mapping
+  thenExprM <- monadificationAlgorithm thenExpr mapping
+  elseExprM <- monadificationAlgorithm elseExpr mapping
+  let result = wrapIntoParenthesis ("ifM" <> " " <> condExprM <> " " <> thenExprM <> " " <> elseExprM)
+   in trace (" ### If-then-else monadification result: " <> result) $
+        Just result
+
 monadifyLambda :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyLambda (HsLam _ (MG _ (L _ [L _ l]) _)) mapping =
   let (L _ (GRHS _ _ body@(L _ bodyExpr))) = head (grhssGRHSs (m_grhss l))
@@ -88,7 +100,7 @@ monadifyApp :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadifyApp (HsApp _ (L _ f) (L _ a)) mapping = do
   fM <- monadificationAlgorithm f mapping
   aM <- monadificationAlgorithm a mapping
-  Just $ wrapIntoParenthesis (fM <> "<.>" <> aM)
+  Just $ wrapIntoParenthesis (fM <> " <.> " <> aM)
 
 monadifyOverloadedLiteral :: HsOverLit GhcPs -> Maybe String
 monadifyOverloadedLiteral olit = Just $ wrapIntoReturn (show (ppr (ol_val olit)))

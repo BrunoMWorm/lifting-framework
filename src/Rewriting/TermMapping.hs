@@ -14,16 +14,18 @@ type TermMapping = [(Term, RawMonadifiedExpression)]
 -- Mapping containing the monadified version of core functions and operators
 initialMapping :: TermMapping
 initialMapping =
-  [ ("+", "return (\\a -> return (\\b -> return (a + b)))"),
+  [ 
+    ("+", "return (\\a -> return (\\b -> return (a + b)))"),
     ("-", "return (\\a -> return (\\b -> return (a - b)))"),
-    ("*", "return (\\a -> return (\\b -> return (a - b)))"),
-    ("/", "return (\\a -> return (\\b -> return (a - b)))"),
-    ("sum", "return (\\a -> return (sum a))"),
-    ("map", "return ( \\f -> return ( \\case\n" ++
-            "  [] -> return []\n" ++
-            "  (x : xs) -> return (\\x1 -> return (\\x2 -> return (x1 : x2))) <.> f x <.> (cmapM <.> return f <.> return xs)\n" ++
-            "  )" ++
-            ")")
+    ("*", "return (\\a -> return (\\b -> return (a * b)))"),
+    ("/", "return (\\a -> return (\\b -> return (a / b)))"),
+    ("<=", "return (\\a -> return (\\b -> return (a <= b)))"),
+    ("<", "return (\\a -> return (\\b -> return (a < b)))"),
+    (">=", "return (\\a -> return (\\b -> return (a >= b)))"),
+    (">", "return (\\a -> return (\\b -> return (a > b)))"),
+    ("==", "return (\\a -> return (\\b -> return (a == b)))"),
+    ("/=", "return (\\a -> return (\\b -> return (a /= b)))"),
+    ("sum", "return (\\a -> return (sum a))")
   ]
 
 lookupTerm :: Term -> TermMapping -> Maybe RawMonadifiedExpression
