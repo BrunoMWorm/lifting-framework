@@ -14,17 +14,17 @@ type TermMapping = [(Term, RawMonadifiedExpression)]
 -- Mapping containing the monadified version of core functions and operators
 initialMapping :: TermMapping
 initialMapping =
-  [ 
-    ("+", "return (\\a -> return (\\b -> return (a + b)))"),
-    ("-", "return (\\a -> return (\\b -> return (a - b)))"),
-    ("*", "return (\\a -> return (\\b -> return (a * b)))"),
-    ("/", "return (\\a -> return (\\b -> return (a / b)))"),
-    ("<=", "return (\\a -> return (\\b -> return (a <= b)))"),
-    ("<", "return (\\a -> return (\\b -> return (a < b)))"),
-    (">=", "return (\\a -> return (\\b -> return (a >= b)))"),
-    (">", "return (\\a -> return (\\b -> return (a > b)))"),
-    ("==", "return (\\a -> return (\\b -> return (a == b)))"),
-    ("/=", "return (\\a -> return (\\b -> return (a /= b)))"),
+  [ ("+", "monadifyBinaryNumOperator (+)"),
+    ("-", "monadifyBinaryNumOperator (-)"),
+    ("*", "monadifyBinaryNumOperator (*)"),
+    ("/", "monadifyBinaryFractionalOperator (/)"),
+    ("<=", "monadifyBinaryOrdOperator (<=)"),
+    ("<", "monadifyBinaryOrdOperator (<)"),
+    (">=", "monadifyBinaryOrdOperator (>=)"),
+    (">", "monadifyBinaryOrdOperator (>)"),
+    ("==", "monadifyUnaryEqOperator (==)"),
+    ("/=", "monadifyUnaryEqOperator (/=)"),
+    -- We can also add some ad-hoc functions here if convenient
     ("sum", "return (\\a -> return (sum a))")
   ]
 

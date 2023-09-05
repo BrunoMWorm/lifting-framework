@@ -4,6 +4,7 @@
 
 module Rewriting.RewriteScript where
 
+import Data.Data
 import qualified Data.String
 import Debug.Trace
 import qualified GHC.Paths
@@ -11,21 +12,21 @@ import Retrie
 import Retrie.ExactPrint
 import Rewriting.TermMapping
 import Text.Read (Lexeme (String))
-import Data.Data
+
 
 -- The entrypoint rule matches all expressions in the target module. All expressions
 -- are rewritten into their corresponding monadified versions.
-
 -- In the `MatchResultTransformer` is where we define exactly how to create their corresponding monadified
 -- versions.
 main :: IO ()
 main = runScript GHC.Paths.libdir $ \opts -> do
-  [rewrite] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = monadifiedExpr"]
-  return $ apply [setRewriteTransformer exprMonadifier rewrite]
+  [monadificationTemplate] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = monadifiedExpr"]
+  let monadification = setRewriteTransformer exprMonadifier monadificationTemplate
+  return $ apply [monadification]
 
 exprMonadifier :: MatchResultTransformer
-exprMonadifier _ match@(MatchResult substitution template) = case lookupSubst "expr" substitution of
-  Just (HoleExpr expr) -> case constructRawMonadifiedExpression expr of
+exprMonadifier ctxt match@(MatchResult substitution template) = case lookupSubst "expr" substitution of
+  Just (HoleExpr expr) -> case constructRawMonadifiedExpression ctxt expr of
     Just rawMonadifiedExpr -> do
       parsedMonadifiedExpr <- parseExpr GHC.Paths.libdir rawMonadifiedExpr
       return $ MatchResult (extendSubst substitution "monadifiedExpr" (HoleExpr parsedMonadifiedExpr)) template
@@ -36,12 +37,15 @@ exprMonadifier _ match@(MatchResult substitution template) = case lookupSubst "e
     print " !! HoleExpr not found. Verify if the rewrite rule in the main function has the correct name of the variable in the 'forall' quantifier."
     return NoMatch
 
--- TODO: insert the name of the function being rewritten into the initial mapping.
--- It is going to be important for them cases where recursion is involved.
-constructRawMonadifiedExpression :: AnnotatedHsExpr -> Maybe String
-constructRawMonadifiedExpression expr =
+constructRawMonadifiedExpression :: Context -> AnnotatedHsExpr -> Maybe String
+constructRawMonadifiedExpression ctxt expr =
   let (L _ hsExpr) = astA expr
-   in trace (" # Starting monadification for expression: " <> exactPrint hsExpr) $ monadificationAlgorithm hsExpr initialMapping
+      -- Here we insert the name of the function being rewritten into the initial mapping.
+      -- It is important for the cases where recursion is involved.
+      ctxtNames = ctxtBinders ctxt
+      ctxtTerms = map (\name -> (show (ppr name), show (ppr name))) ctxtNames
+      mapping = initialMapping ++ ctxtTerms
+   in trace (" # Starting monadification for expression: " <> exactPrint hsExpr) $ monadificationAlgorithm hsExpr mapping
 
 monadificationAlgorithm :: HsExpr GhcPs -> TermMapping -> Maybe String
 monadificationAlgorithm expr termMapping = case expr of
