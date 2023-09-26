@@ -48,10 +48,17 @@ import Text.Read (Lexeme (String))
 -- In the `MatchResultTransformer` is where we define exactly how to create their corresponding monadified
 -- versions.
 main :: IO ()
-main = runScript GHC.Paths.libdir $ \opts -> do
+main = sequence_ [monadificationScript, memoizationScript]
+
+monadificationScript  :: IO ()
+monadificationScript = runScript GHC.Paths.libdir $ \opts -> do
   [monadificationTemplate] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = monadifiedExpr"]
+  let monadfication = setRewriteTransformer exprMonadifier monadificationTemplate
+  return $ apply [monadfication]
+
+memoizationScript :: IO ()
+memoizationScript = runScript GHC.Paths.libdir $ \opts -> do
   [memoizationTemplate] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = memoizedExpr"]
-  let monadification = setRewriteTransformer exprMonadifier monadificationTemplate
   let memoization = setRewriteTransformer exprMemoizer memoizationTemplate
   return $ apply [memoization]
 
