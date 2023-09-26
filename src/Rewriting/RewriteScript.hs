@@ -53,8 +53,8 @@ main = sequence_ [monadificationScript, memoizationScript]
 monadificationScript  :: IO ()
 monadificationScript = runScript GHC.Paths.libdir $ \opts -> do
   [monadificationTemplate] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = monadifiedExpr"]
-  let monadfication = setRewriteTransformer exprMonadifier monadificationTemplate
-  return $ apply [monadfication]
+  let monadification = setRewriteTransformer exprMonadifier monadificationTemplate
+  return $ apply [monadification]
 
 memoizationScript :: IO ()
 memoizationScript = runScript GHC.Paths.libdir $ \opts -> do
@@ -96,23 +96,18 @@ constructRawMemoizedExpression expr = let (L _ hsExpr) = astA expr in memoizatio
 
 memoizationAlgorithm :: HsExpr GhcPs -> Maybe String
 memoizationAlgorithm hsExpr = case hsExpr of
-  -- If it is a lambda, we continue from the body
+  -- If it is a lambda, we just return "Nothing", so the traverse will continue to the body
   (HsLam _ (MG _ (L _ [L _ l]) _)) -> Nothing
-  -- (HsLam _ (MG _ (L _ [L _ l]) _)) -> let (L _ (GRHS _ _ body@(L _ bodyExpr))) = head (grhssGRHSs (m_grhss l)) in memoizationAlgorithm bodyExpr
   -- If it is an application and the name of the function is just a "return", then it is the middle product of the monadification. We just continue as well
   app@(HsApp _ func@(L _ f) args@(L _ a)) ->
     if exactPrint f == "return"
       then Nothing
       else Just $ finishMemoization app
-  -- Otherwise, we have reached our stop condition
+  -- Sometimes it happens that the "return" application are detected as a HsVar.
+  -- Therefore, we also have to check if the name of the "HsVar" expressions are named return.
   var@(HsVar _ (L _ name)) -> if show (ppr name) == "return" then Nothing else Just $ finishMemoization var
+  -- Otherwise, we have reached our stop condition
   stopCondition -> Just $ finishMemoization stopCondition
-
--- constructRawMemoizedExpression expr = let params = collectLambdaParams expr in Just $ "retrieveOrRun" <> " n " <> wrapIntoParenthesis ("\\_ -> " <>  show (ppr (astA expr)))
--- -- If it is a lambda, add to the param list and continue with the body
--- lambda@(HsLam {}) -> Nothing
--- -- Stop condition
--- _ -> Nothing
 
 finishMemoization :: HsExpr GhcPs -> String
 finishMemoization hsExpr = "retrieveOrRun " <> unwords memoizationParamNames <> " " <> wrapIntoParenthesis ("\\_ -> " <> show (ppr hsExpr))
