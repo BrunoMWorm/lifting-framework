@@ -4,15 +4,44 @@
 
 module Rewriting.RewriteScript where
 
-import Data.Data
+import Data.Data (Data (toConstr))
+import Data.List (intercalate)
 import qualified Data.String
-import Debug.Trace
+import Debug.Trace (trace)
 import qualified GHC.Paths
 import Retrie
-import Retrie.ExactPrint
+  ( Annotated (astA),
+    AnnotatedHsExpr,
+    Context (ctxtBinders),
+    GRHS (GRHS),
+    GRHSs (grhssGRHSs),
+    GenLocated (L),
+    GhcPs,
+    HoleVal (HoleExpr),
+    HsExpr (HsApp, HsIf, HsLam, HsLit, HsOverLit, HsPar, HsVar, OpApp),
+    HsLit,
+    HsOverLit (ol_val),
+    Match (m_grhss, m_pats),
+    MatchGroup (MG),
+    MatchResult (MatchResult, NoMatch),
+    MatchResultTransformer,
+    Outputable (ppr),
+    RewriteSpec (Adhoc),
+    apply,
+    extendSubst,
+    lookupSubst,
+    parseExpr,
+    parseRewrites,
+    runScript,
+    setRewriteTransformer,
+  )
+import Retrie.ExactPrint (exactPrint)
 import Rewriting.TermMapping
+  ( TermMapping,
+    initialMapping,
+    lookupTerm,
+  )
 import Text.Read (Lexeme (String))
-
 
 -- The entrypoint rule matches all expressions in the target module. All expressions
 -- are rewritten into their corresponding monadified versions.
@@ -21,8 +50,65 @@ import Text.Read (Lexeme (String))
 main :: IO ()
 main = runScript GHC.Paths.libdir $ \opts -> do
   [monadificationTemplate] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = monadifiedExpr"]
+  [memoizationTemplate] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = memoizedExpr"]
   let monadification = setRewriteTransformer exprMonadifier monadificationTemplate
-  return $ apply [monadification]
+  let memoization = setRewriteTransformer exprMemoizer memoizationTemplate
+  return $ apply [memoization]
+
+-- Let's start hardcoding the name of the target. We can parametrize this later on.
+memoizationTargetName :: String
+memoizationTargetName = "fibRec"
+
+-- Also hardcoding the name of the params on which we use memoization.
+-- We can later explore more this bit as to allow the construction of a key from the params.
+memoizationParamNames :: [String]
+memoizationParamNames = ["n"]
+
+exprMemoizer :: MatchResultTransformer
+exprMemoizer ctxt match@(MatchResult substitution template) = case lookupSubst "expr" substitution of
+  Just (HoleExpr expr) ->
+    let (L _ hsExpr) = astA expr
+        ctxtNames = ctxtBinders ctxt
+        -- Name of the function being rewritten
+        ctxtNameString = head $ map (show . ppr) ctxtNames
+     in if ctxtNameString == memoizationTargetName
+          then case constructRawMemoizedExpression expr of
+            Just rawMemoizedExpr -> do
+              parsedMemoizedExpr <- parseExpr GHC.Paths.libdir rawMemoizedExpr
+              return $ MatchResult (extendSubst substitution "memoizedExpr" (HoleExpr parsedMemoizedExpr)) template
+            Nothing -> do
+              print $ " !! Expression " <> exactPrint hsExpr <> " is not the memoization target."
+              return NoMatch
+          else return NoMatch
+  Nothing -> do
+    print " !! HoleExpr not found. Verify if the rewrite rule in the main function has the correct name of the variable in the 'forall' quantifier."
+    return NoMatch
+
+constructRawMemoizedExpression :: AnnotatedHsExpr -> Maybe String
+constructRawMemoizedExpression expr = let (L _ hsExpr) = astA expr in memoizationAlgorithm hsExpr
+
+memoizationAlgorithm :: HsExpr GhcPs -> Maybe String
+memoizationAlgorithm hsExpr = case hsExpr of
+  -- If it is a lambda, we continue from the body
+  (HsLam _ (MG _ (L _ [L _ l]) _)) -> Nothing
+  -- (HsLam _ (MG _ (L _ [L _ l]) _)) -> let (L _ (GRHS _ _ body@(L _ bodyExpr))) = head (grhssGRHSs (m_grhss l)) in memoizationAlgorithm bodyExpr
+  -- If it is an application and the name of the function is just a "return", then it is the middle product of the monadification. We just continue as well
+  app@(HsApp _ func@(L _ f) args@(L _ a)) ->
+    if exactPrint f == "return"
+      then Nothing
+      else Just $ finishMemoization app
+  -- Otherwise, we have reached our stop condition
+  var@(HsVar _ (L _ name)) -> if show (ppr name) == "return" then Nothing else Just $ finishMemoization var
+  stopCondition -> Just $ finishMemoization stopCondition
+
+-- constructRawMemoizedExpression expr = let params = collectLambdaParams expr in Just $ "retrieveOrRun" <> " n " <> wrapIntoParenthesis ("\\_ -> " <>  show (ppr (astA expr)))
+-- -- If it is a lambda, add to the param list and continue with the body
+-- lambda@(HsLam {}) -> Nothing
+-- -- Stop condition
+-- _ -> Nothing
+
+finishMemoization :: HsExpr GhcPs -> String
+finishMemoization hsExpr = "retrieveOrRun " <> unwords memoizationParamNames <> " " <> wrapIntoParenthesis ("\\_ -> " <> show (ppr hsExpr))
 
 exprMonadifier :: MatchResultTransformer
 exprMonadifier ctxt match@(MatchResult substitution template) = case lookupSubst "expr" substitution of
