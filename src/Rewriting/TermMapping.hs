@@ -22,10 +22,15 @@ initialMapping =
     ("<", "monadifyBinaryOrdOperator (<)"),
     (">=", "monadifyBinaryOrdOperator (>=)"),
     (">", "monadifyBinaryOrdOperator (>)"),
-    ("==", "monadifyUnaryEqOperator (==)"),
-    ("/=", "monadifyUnaryEqOperator (/=)"),
+    ("==", "monadifyBinaryEqOperator (==)"),
+    ("/=", "monadifyBinaryEqOperator (/=)"),
     -- We can also add some ad-hoc functions here if convenient
-    ("sum", "return (\\a -> return (sum a))")
+    ("sum", "return (\\a -> return (sum a))"),
+    ("fst", "return (\\t -> return (fst t))"),
+    ("snd", "return (\\t -> return (snd t))"),
+    ("null", "return (\\t -> return (null t))"),
+    ("head", "return (\\t -> return (head t))"),
+    ("tail", "return (\\t -> return (tail t))")
   ]
 
 lookupTerm :: Term -> TermMapping -> Maybe RawMonadifiedExpression

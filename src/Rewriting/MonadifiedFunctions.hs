@@ -3,7 +3,7 @@ module Rewriting.MonadifiedFunctions where
 -- Monadified function definitions that can be injected into the rewritten program
 
 -- Monadified if-then-else transformation
-ifM :: Monad m => m Bool -> m b -> m b -> m b
+ifM :: (Monad m) => m Bool -> m b -> m b -> m b
 ifM condExprM thenExprM elseExprM = do
   condExpr <- condExprM
   if condExpr then thenExprM else elseExprM
@@ -19,3 +19,7 @@ monadifyBinaryFractionalOperator op = return (\a -> return (\b -> return (a `op`
 -- Used for (<), (<=), (>), (>=)
 monadifyBinaryOrdOperator :: (Monad m, Ord a) => (a -> a -> Bool) -> m (a -> m (a -> m Bool))
 monadifyBinaryOrdOperator op = return (\a -> return (\b -> return (a `op` b)))
+
+-- Used for (!=), (==)
+monadifyBinaryEqOperator :: (Monad m, Eq a) => (a -> a -> Bool) -> m (a -> m (a -> m Bool))
+monadifyBinaryEqOperator op = return (\a -> return (\b -> return (a `op` b)))
