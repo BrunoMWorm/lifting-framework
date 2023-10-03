@@ -19,7 +19,3 @@ monadifyBinaryFractionalOperator op = return (\a -> return (\b -> return (a `op`
 -- Used for (<), (<=), (>), (>=)
 monadifyBinaryOrdOperator :: (Monad m, Ord a) => (a -> a -> Bool) -> m (a -> m (a -> m Bool))
 monadifyBinaryOrdOperator op = return (\a -> return (\b -> return (a `op` b)))
-
--- Used for (<), (<=), (>), (>=)
-monadifyUnaryEqOperator :: (Monad m, Eq a) => (a -> Bool) -> m (a -> m Bool)
-monadifyUnaryEqOperator op = return (return . op)
