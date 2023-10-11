@@ -2,7 +2,7 @@
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Rewriting.RewriteScript where
+module Rewriting.Rules.RewriteScript where
 
 import Data.Data (Data (toConstr))
 import Data.List (intercalate)
@@ -36,7 +36,7 @@ import Retrie
     setRewriteTransformer,
   )
 import Retrie.ExactPrint (exactPrint)
-import Rewriting.TermMapping
+import Rewriting.Rules.TermMapping
   ( TermMapping,
     initialMapping,
     lookupTerm,
@@ -64,7 +64,7 @@ memoizationScript = runScript GHC.Paths.libdir $ \opts -> do
 
 -- Let's start hardcoding the name of the target. We can parametrize this later on.
 memoizationTargetName :: String
-memoizationTargetName = "tokenCount"
+memoizationTargetName = "tokenCountA"
 
 -- Also hardcoding the name of the params on which we use memoization.
 -- We can later explore more this bit as to allow the construction of a key from the params.

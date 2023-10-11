@@ -1,4 +1,4 @@
-module Rewriting.MonadifiedFunctions where
+module Rewriting.Rules.MonadifiedFunctions where
 
 -- Monadified function definitions that can be injected into the rewritten program
 

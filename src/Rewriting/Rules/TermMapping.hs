@@ -1,4 +1,4 @@
-module Rewriting.TermMapping where
+module Rewriting.Rules.TermMapping where
 
 import Data.Maybe (listToMaybe)
 
