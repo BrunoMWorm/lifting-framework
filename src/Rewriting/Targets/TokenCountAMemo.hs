@@ -4,10 +4,11 @@
 {-# HLINT ignore "Use guards" #-}
 module Rewriting.Targets.TokenCountAMemo where
 
-import Memoization.Core.Memory
-import Memoization.Core.State
+import Memoization.Core.Memory ( KeyValueArray, retrieveOrRun )
+import Memoization.Core.State ( State, (<.>) )
 import Rewriting.Rules.MonadifiedFunctions
-import Variability.VarTypes
+    ( ifM, monadifyBinaryNumOperator, monadifyBinaryEqOperator )
+import Variability.VarTypes ()
 
 tokenCountA :: State (KeyValueArray [Int] Int) ([Int] -> State (KeyValueArray [Int] Int) Int)
 tokenCountA =
