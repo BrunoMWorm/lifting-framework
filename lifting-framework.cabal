@@ -29,6 +29,7 @@ library
         Language.MInterpreter.Interpreter
         Language.VInterpreter.Driver
         Language.VInterpreter.Interpreter
+        Rewriting.Targets.MonadifiedFib
         Rewriting.Targets.TokenCountA
         Rewriting.Targets.TokenCountADeep
         Rewriting.Targets.TokenCountAMemo
@@ -36,6 +37,7 @@ library
         Rewriting.Rules.MonadifiedFunctions
         Rewriting.Rules.RewriteScript
         Rewriting.Rules.TermMapping
+        Variability.VarLib
         Variability.VarTypes
     other-extensions:
         InstanceSigs TupleSections FlexibleInstances LambdaCase
