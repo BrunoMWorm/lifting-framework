@@ -34,6 +34,9 @@ library
         Rewriting.Targets.TokenCountADeep
         Rewriting.Targets.TokenCountAMemo
         Rewriting.Targets.TokenCountADeepMemo
+        Rewriting.Targets.TokenCountMonadBoth
+        Rewriting.Targets.TokenCountMonadMemo
+        Rewriting.Targets.TokenCountMonadVar
         Rewriting.Rules.MonadifiedFunctions
         Rewriting.Rules.RewriteScript
         Rewriting.Rules.TermMapping
@@ -52,8 +55,8 @@ library
         hashable == 1.4.3.0,
         retrie == 1.2.2,
         ghc-paths >= 0.1.0.0,
-        vector >= 0.13.0.0
-
+        vector >= 0.13.0.0,
+        transformers == 0.5.6.2
     ghc-options: -fno-ignore-asserts
     hs-source-dirs:   src
     default-language: Haskell2010
