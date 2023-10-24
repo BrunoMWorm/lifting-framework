@@ -15,20 +15,6 @@ library
     exposed-modules:
         Memoization.Core.State
         Memoization.Core.Memory
-        Language.Frontend.TestLanguage
-        Language.Frontend.ErrM
-        Language.Frontend.AbsLanguage
-        Language.Frontend.ParLanguage
-        Language.Frontend.PrintLanguage
-        Language.Frontend.LexLanguage
-        Language.Frontend.SkelLanguage
-        Language.Interpreter.Driver
-        Language.Interpreter.Interpreter
-        Language.MInterpreter.SLDriver
-        Language.MInterpreter.Driver
-        Language.MInterpreter.Interpreter
-        Language.VInterpreter.Driver
-        Language.VInterpreter.Interpreter
         Rewriting.Targets.MonadifiedFib
         Rewriting.Targets.TokenCountA
         Rewriting.Targets.TokenCountADeep
@@ -41,7 +27,9 @@ library
         Rewriting.Rules.RewriteScript
         Rewriting.Rules.TermMapping
         Variability.VarLib
-        Variability.VarTypes
+        Variability.VarTransformer
+        Variability.Legacy.VarTypes
+
     other-extensions:
         InstanceSigs TupleSections FlexibleInstances LambdaCase
         MultiParamTypeClasses PatternSynonyms CPP
@@ -59,20 +47,4 @@ library
         transformers == 0.5.6.2
     ghc-options: -fno-ignore-asserts
     hs-source-dirs:   src
-    default-language: Haskell2010
-
-executable lifting-framework
-    main-is:          Main.hs
-
-    other-extensions:
-        InstanceSigs TupleSections FlexibleInstances LambdaCase
-        MultiParamTypeClasses PatternSynonyms CPP
-        GeneralizedNewtypeDeriving OverlappingInstances MagicHash
-
-    build-depends:
-        base >= 4.12.0.0 && < 4.19.0.0,
-        array > 0.4.0.0 && < 0.6.0.0,
-        lifting-framework == 0.1.0.0,
-    ghc-options: -fno-ignore-asserts
-    hs-source-dirs:   app
     default-language: Haskell2010

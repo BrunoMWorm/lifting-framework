@@ -1,9 +1,0 @@
-main (n) {
-  fib (n)
-}
-
-fib (a) {
-  if (a * (a - 1))
-    then fib(a-1) + fib(a-2)
-    else 1
-}

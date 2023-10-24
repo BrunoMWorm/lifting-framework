@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE InstanceSigs #-}
 
-module Variability.VarTypes where
+module Variability.Legacy.VarTypes where
 
 import Control.Exception (assert)
 import Cudd.Cudd (DDManager, DDNode, bAnd, bNot, bOr, cuddInit, ithVar, nodeReadIndex, readLogicZero, readOne)

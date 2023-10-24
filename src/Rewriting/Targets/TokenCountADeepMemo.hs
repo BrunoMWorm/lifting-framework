@@ -12,7 +12,7 @@ import Rewriting.Rules.MonadifiedFunctions
   ( monadifyBinaryNumOperator,
   )
 import qualified Rewriting.Targets.TokenCountAMemo as M
-import Variability.VarTypes
+import Variability.Legacy.VarTypes
   ( PresenceCondition,
     VClass (comb, restrict),
     Var,

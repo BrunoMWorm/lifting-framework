@@ -160,10 +160,19 @@ pairs :: [t] -> [(t, t)]
 pairs [] = []
 pairs xs = zip xs (tail xs)
 
+restrict :: PresenceCondition -> Var t -> Var t
+restrict pc v'@(Var v)
+  | pc == truePC = v'
+  | pc == falsePC = Var []
+  | otherwise = Var [(x, p) | (x, pc') <- v, let p = pc' /\ pc, sat p]
+
 union :: Var t -> Var t -> Var t
 union x@(Var a) y@(Var b) =
   let result = Var (a ++ b)
    in result
+
+concatVar :: Var (Var t) -> Var t
+concatVar (Var xs') = unions (map (\(x, pc) -> restrict pc x) xs')
 
 disj :: [PresenceCondition] -> PresenceCondition
 disj = foldr orPC falsePC

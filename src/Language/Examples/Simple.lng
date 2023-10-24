@@ -1,7 +1,0 @@
-main(n) {
-    conditional (n) + 3
-}
-
-conditional(a) {
-    if (a) then a + 1 else a - 1
-}

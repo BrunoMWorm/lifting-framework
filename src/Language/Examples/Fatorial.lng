@@ -1,9 +1,0 @@
-main (n) {
-  fat (n)
-}
-
-fat (n) {
- if (n)
-    then n * fat (n-1)
-    else 1
-}
