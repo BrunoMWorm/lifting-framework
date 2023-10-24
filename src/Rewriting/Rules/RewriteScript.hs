@@ -50,7 +50,7 @@ import Text.Read (Lexeme (String))
 main :: IO ()
 main = sequence_ [monadificationScript, memoizationScript]
 
-monadificationScript  :: IO ()
+monadificationScript :: IO ()
 monadificationScript = runScript GHC.Paths.libdir $ \opts -> do
   [monadificationTemplate] <- parseRewrites GHC.Paths.libdir opts [Adhoc "forall expr. expr = monadifiedExpr"]
   let monadification = setRewriteTransformer exprMonadifier monadificationTemplate

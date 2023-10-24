@@ -3,7 +3,7 @@
 {-# HLINT ignore "Redundant lambda" #-}
 {-# HLINT ignore "Use guards" #-}
 {-# HLINT ignore "Avoid lambda" #-}
-module Rewriting.Targets.TokenCountMonadMemo where
+module Rewriting.Targets.TokenCount.TokenCountMonadMemo where
 
 import Control.Monad (join)
 import Memoization.Core.Memory (KeyMemory, KeyValueArray, retrieveOrRun)
@@ -15,8 +15,8 @@ import Rewriting.Rules.MonadifiedFunctions
   )
 import Variability.VarLib (PresenceCondition, Var (Var), mkPCVar, mkVar, notPC, (/\))
 
-tokenCountA :: State (KeyValueArray [Int] Int) ([Int] -> State (KeyValueArray [Int] Int) Int)
-tokenCountA =
+tokenCount :: State (KeyValueArray [Int] Int) ([Int] -> State (KeyValueArray [Int] Int) Int)
+tokenCount =
   return
     ( \xs ->
         ifM
@@ -30,7 +30,7 @@ tokenCountA =
               ( retrieveOrRun
                   xs
                   ( \_ ->
-                      tokenCountA
+                      tokenCount
                         <@> (return (return . tail) <@> return xs)
                   )
               )
@@ -39,7 +39,7 @@ tokenCountA =
                   <@> retrieveOrRun
                     xs
                     ( \_ ->
-                        tokenCountA
+                        tokenCount
                           <@> (return (return . tail) <@> return xs)
                     )
               )
@@ -53,4 +53,4 @@ input :: [Int]
 input = [1, 2, 3, 4]
 
 result :: (Int, KeyValueArray [Int] Int)
-result = runState (tokenCountA <@> return input) []
+result = runState (tokenCount <@> return input) []

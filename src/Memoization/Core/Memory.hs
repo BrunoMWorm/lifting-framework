@@ -7,8 +7,8 @@
 
 module Memoization.Core.Memory where
 
+import Debug.Trace ()
 import Memoization.Core.State (State (State, runState))
-import Debug.Trace
 
 class KeyMemory k v m where
   mlookup :: k -> State m (Maybe v)
@@ -16,7 +16,7 @@ class KeyMemory k v m where
 
 type KeyValueArray k v = [(k, v)]
 
-instance Eq k => (KeyMemory k v) (KeyValueArray k v) where
+instance (Eq k) => (KeyMemory k v) (KeyValueArray k v) where
   mlookup :: k -> State (KeyValueArray k v) (Maybe v)
   mlookup a = State (\s -> (lookup a s, s))
   mupdate :: k -> v -> State (KeyValueArray k v) ()

@@ -1,12 +1,15 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE InstanceSigs #-}
 
 module Variability.VarLib where
 
+import Control.DeepSeq (NFData (rnf))
 import Control.Exception (assert)
 import Cudd.Cudd (DDManager, DDNode, bAnd, bNot, bOr, cuddInit, ithVar, nodeReadIndex, readLogicZero, readOne)
 import qualified Data.HashTable.IO as H
 import Data.Hashable (Hashable (hashWithSalt))
 import qualified Data.List as L
+import GHC.Generics (Generic)
 import GHC.IO (unsafePerformIO)
 import GHC.StableName (makeStableName)
 
@@ -146,6 +149,7 @@ unsat p = p == falsePC
 type Val a = (a, PresenceCondition)
 
 newtype Var t = Var [Val t]
+  deriving (Generic)
 
 mkVar :: t -> PresenceCondition -> Var t
 mkVar v pc = Var [(v, pc)]
@@ -213,6 +217,14 @@ x === y = unsafePerformIO $ do
 compact :: Var t -> Var t
 compact (Var v) = Var (groupVals v (===))
 
+definedAt :: Var t -> PresenceCondition
+definedAt (Var xs) = disj pcs
+  where
+    pcs = map snd xs
+
+undefinedAt :: Var t -> PresenceCondition
+undefinedAt = notPC . definedAt
+
 -- Completeness and Disjointness Invariants
 disjInv :: Var t -> Bool
 disjInv (Var v) = all (\((_, pc1), (_, pc2)) -> unsat (pc1 /\ pc2)) (pairs v)
@@ -220,6 +232,11 @@ disjInv (Var v) = all (\((_, pc1), (_, pc2)) -> unsat (pc1 /\ pc2)) (pairs v)
 compInv :: Var t -> Bool
 compInv (Var v) =
   foldr (\(_, pc) pc' -> pc \/ pc') falsePC v == truePC
+
+fixCompleteness :: a -> Var a -> Var a
+fixCompleteness dummy v =
+  let r = undefinedAt v
+   in if r == falsePC then v else union v $ mkVar dummy r
 
 -- Lifted apply definition
 
@@ -262,3 +279,7 @@ instance (Show a) => Show (Var a) where
   show v' =
     let (Var v) = compact v'
      in "{" ++ L.intercalate ", " (map show v) ++ "}"
+
+instance NFData (Var a) where
+  rnf :: Var a -> ()
+  rnf (Var xs) = xs `seq` map (\(x, pc) -> x `seq` pc `seq` ()) xs `seq` ()

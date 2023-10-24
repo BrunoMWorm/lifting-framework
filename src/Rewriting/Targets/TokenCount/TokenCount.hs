@@ -2,13 +2,13 @@
 
 {-# HLINT ignore "Redundant lambda" #-}
 {-# HLINT ignore "Use guards" #-}
-module Rewriting.Targets.TokenCountA where
+module Rewriting.Targets.TokenCount.TokenCount where
 
-tokenCountA :: [Int] -> Int
-tokenCountA = \xs ->
+tokenCount :: [Int] -> Int
+tokenCount = \xs ->
   if null xs
     then 0
     else
       if head xs == 0
-        then tokenCountA (tail xs)
-        else 1 + tokenCountA (tail xs)
+        then tokenCount (tail xs)
+        else 1 + tokenCount (tail xs)
