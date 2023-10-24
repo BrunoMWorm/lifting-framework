@@ -16,6 +16,9 @@ library
         Rewriting.Targets.CFG.CFG
         Rewriting.Targets.CFG.VCFG
         Rewriting.Targets.CFG.NodeTypes
+        Rewriting.Targets.Return.Return
+        Rewriting.Targets.Return.ReturnMemo
+        Rewriting.Targets.Return.ReturnMonad
         Rewriting.Targets.TokenCount.TokenCount
         Rewriting.Targets.TokenCount.TokenCountMonadBoth
         Rewriting.Targets.TokenCount.TokenCountMonadMemo
