@@ -5,8 +5,6 @@ version:            0.1.0.0
 author:             BrunoMWorm
 maintainer:         brunomatissek.worm@gmail.com
 
-build-tools:         alex, happy
-
 extra-source-files:
     CHANGELOG.md
     README.md
@@ -15,20 +13,18 @@ library
     exposed-modules:
         Memoization.Core.State
         Memoization.Core.Memory
-        Rewriting.Targets.MonadifiedFib
-        Rewriting.Targets.TokenCountA
-        Rewriting.Targets.TokenCountADeep
-        Rewriting.Targets.TokenCountAMemo
-        Rewriting.Targets.TokenCountADeepMemo
-        Rewriting.Targets.TokenCountMonadBoth
-        Rewriting.Targets.TokenCountMonadMemo
-        Rewriting.Targets.TokenCountMonadVar
+        Rewriting.Targets.CFG.CFG
+        Rewriting.Targets.CFG.VCFG
+        Rewriting.Targets.CFG.NodeTypes
+        Rewriting.Targets.TokenCount.TokenCount
+        Rewriting.Targets.TokenCount.TokenCountMonadBoth
+        Rewriting.Targets.TokenCount.TokenCountMonadMemo
+        Rewriting.Targets.TokenCount.TokenCountMonadVar
         Rewriting.Rules.MonadifiedFunctions
         Rewriting.Rules.RewriteScript
         Rewriting.Rules.TermMapping
         Variability.VarLib
         Variability.VarTransformer
-        Variability.Legacy.VarTypes
 
     other-extensions:
         InstanceSigs TupleSections FlexibleInstances LambdaCase
@@ -38,13 +34,17 @@ library
     build-depends:
         base >= 4.12.0.0 && < 4.19.0.0,
         array > 0.4.0.0 && < 0.6.0.0,
-        cudd == 0.1.0.4,
-        hashtables == 1.3.1,
-        hashable == 1.4.3.0,
-        retrie == 1.2.2,
+        cudd >= 0.1.0.4,
+        hashtables >= 1.3.1,
+        hashable >= 1.4.3.0,
+        retrie >= 1.2.2,
         ghc-paths >= 0.1.0.0,
         vector >= 0.13.0.0,
-        transformers == 0.5.6.2
+        transformers >= 0.5.6.2,
+        text >= 1.2.5.0,
+        more-containers >= 0.2.2.2,
+        language-c >= 0.9.2,
+        deepseq >= 1.4.6.1
     ghc-options: -fno-ignore-asserts
     hs-source-dirs:   src
     default-language: Haskell2010
