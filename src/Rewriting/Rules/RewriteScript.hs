@@ -64,7 +64,7 @@ memoizationScript = runScript GHC.Paths.libdir $ \opts -> do
 
 -- Let's start hardcoding the name of the target. We can parametrize this later on.
 memoizationTargetName :: String
-memoizationTargetName = "tokenCountA"
+memoizationTargetName = "tokenCount"
 
 -- Also hardcoding the name of the params on which we use memoization.
 -- We can later explore more this bit as to allow the construction of a key from the params.
