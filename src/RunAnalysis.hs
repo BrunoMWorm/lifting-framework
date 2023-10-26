@@ -149,13 +149,14 @@ main = do
       deepCompInner = fmap (fmap runVarT) deepComp
       deepCompOuter = fmap sequence deepCompInner
       runVarTRes = runVarT deepCompOuter
-      runSTRes = runState runVarTRes []
+      runSTRes = runState runVarTRes initialState
       traverseResult = uncurry traverseVarSt runSTRes
-   in print traverseResult
+  print $ fst traverseResult
+  print $ snd traverseResult
 
-traverseVarSt :: Var (State m a) -> m -> Var a
-traverseVarSt (Var []) _ = Var []
+traverseVarSt :: Var (State m a) -> m -> (m, Var a)
+traverseVarSt (Var []) st = (st, Var [])
 traverseVarSt (Var ((s, pc) : ls)) st =
-  let (execStateRes, newSt) = runState s st
-      tailRes = traverseVarSt (mkVars ls) newSt
-   in union (mkVar execStateRes pc) tailRes
+  let (execStateRes, currSt) = runState s st
+      (newSt, tailRes) = traverseVarSt (mkVars ls) currSt
+   in (newSt, mkVar execStateRes pc `union` tailRes)

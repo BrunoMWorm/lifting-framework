@@ -1,5 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use const" #-}
 
 module Rewriting.Targets.Return.ReturnMonadVar where
 
@@ -14,7 +17,7 @@ import Rewriting.Targets.CFG.VCFG
 import Variability.VarLib
 import Variability.VarTransformer
 
-type VarState = VarT (State (KeyValueArray [Int] Int))
+type VarState = VarT (State (KeyValueArray Int (Var Bool)))
 
 findM :: VarState (Int -> VarState ([VarState Int] -> VarState Bool))
 findM =
@@ -100,13 +103,13 @@ hasReturnM =
     ( \cfg ->
         return
           ( \n ->
-              -- A memoização aqui não funciona nos casos VarStateiacionais"
-              -- Afinal, um ID de CFG aponta para um CFG cujas arestas dependem da condição de presença
-              -- retrieveOrRun
-              --   (_nID n)
-              --   ( \_ ->
-              followSuccessorsM <#> return cfg <#> return [(VarT . return) $ _nID' (return n)] <#> return n
-              -- )
+              let computation = followSuccessorsM <#> return cfg <#> return [(VarT . return) $ _nID' (return n)] <#> return n
+               in VarT $
+                    retrieveOrRun
+                      (_nID n)
+                      ( \_ ->
+                          runVarT computation
+                      )
           )
     )
 
