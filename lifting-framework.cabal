@@ -21,6 +21,7 @@ library
         Rewriting.Targets.Return.Return
         Rewriting.Targets.Return.ReturnMemo
         Rewriting.Targets.Return.ReturnMonad
+        Rewriting.Targets.Return.ReturnMonadVar
         Rewriting.Targets.TokenCount.TokenCount
         Rewriting.Targets.TokenCount.TokenCountMonadBoth
         Rewriting.Targets.TokenCount.TokenCountMonadMemo

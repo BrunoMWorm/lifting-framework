@@ -159,6 +159,9 @@ type Val a = (a, PresenceCondition)
 newtype Var t = Var [Val t]
   deriving (Generic)
 
+mkVarT :: t -> Var t
+mkVarT v = Var [(v, truePC)]
+
 mkVar :: t -> PresenceCondition -> Var t
 mkVar v pc = Var [(v, pc)]
 

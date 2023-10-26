@@ -16,8 +16,8 @@ import Rewriting.Targets.CFG.CFGParser
 import Rewriting.Targets.CFG.NodeTypes
 import qualified Rewriting.Targets.CFG.VCFG as V
 import Rewriting.Targets.Return.Return
-import qualified Rewriting.Targets.Return.Return as Deep
 import Rewriting.Targets.Return.ReturnMemo (analyzeM)
+import qualified Rewriting.Targets.Return.ReturnMonadVar as Deep
 import Variability.VarLib
 
 analysis :: String
@@ -70,8 +70,8 @@ shallowM ::
     (Var CFG -> State (KeyValueArray Int Bool) (Var [CFGNode]))
 shallowM = shallowLift analyzeM
 
--- deep :: Var V.CFG -> [Var V.CFGNode]
--- deep = Deep.analyzeM
+deep :: Var (V.CFG -> Var [Var V.CFGNode])
+deep = Deep.analyzeM
 
 nodes' :: Var CFG -> Var (Data.Multimap.List.ListMultimap Int CFGNode)
 nodes' = fmap nodes
@@ -141,6 +141,5 @@ main = do
   print "ShallowM:"
   print $ runState (shallowM <.> return (shallowCFG env)) []
   print "##############"
-
---   print "Deep:"
---   print $ deep (deepCFG env)
+  print "Deep:"
+  print $ deep Deep.<#> deepCFG env
