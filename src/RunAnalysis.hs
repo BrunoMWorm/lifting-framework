@@ -6,6 +6,7 @@
 module RunAnalysis where
 
 import Control.DeepSeq
+import Control.Monad (join)
 import qualified Data.Multimap.List
 import qualified Data.Set as S
 import GHC.Generics
@@ -19,6 +20,7 @@ import Rewriting.Targets.Return.Return
 import Rewriting.Targets.Return.ReturnMemo (analyzeM)
 import qualified Rewriting.Targets.Return.ReturnMonadVar as Deep
 import Variability.VarLib
+import Variability.VarTransformer
 
 analysis :: String
 analysis = "Return"
@@ -70,7 +72,7 @@ shallowM ::
     (Var CFG -> State (KeyValueArray Int Bool) (Var [CFGNode]))
 shallowM = shallowLift analyzeM
 
-deep :: Var (V.CFG -> Var [Var V.CFGNode])
+deep :: Deep.VarState (V.CFG -> Deep.VarState [Deep.VarState V.CFGNode])
 deep = Deep.analyzeM
 
 nodes' :: Var CFG -> Var (Data.Multimap.List.ListMultimap Int CFGNode)
@@ -142,4 +144,18 @@ main = do
   print $ runState (shallowM <.> return (shallowCFG env)) []
   print "##############"
   print "Deep:"
-  print $ deep Deep.<#> deepCFG env
+  let initialState = []
+      deepComp = deep Deep.<#> (VarT . return) (deepCFG env)
+      deepCompInner = fmap (fmap runVarT) deepComp
+      deepCompOuter = fmap sequence deepCompInner
+      runVarTRes = runVarT deepCompOuter
+      runSTRes = runState runVarTRes []
+      traverseResult = uncurry traverseVarSt runSTRes
+   in print traverseResult
+
+traverseVarSt :: Var (State m a) -> m -> Var a
+traverseVarSt (Var []) _ = Var []
+traverseVarSt (Var ((s, pc) : ls)) st =
+  let (execStateRes, newSt) = runState s st
+      tailRes = traverseVarSt (mkVars ls) newSt
+   in union (mkVar execStateRes pc) tailRes
