@@ -1,7 +1,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TupleSections #-}
 
-module Memoization.Core.State ((<.>), runState, State (State), Functor, Applicative, Monad, execState, evalState) where
+module Memoization.Core.State where
 
 newtype State m a = State {runState :: m -> (a, m)}
 

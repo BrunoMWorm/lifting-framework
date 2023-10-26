@@ -3,10 +3,10 @@
 
 module Rewriting.Targets.CFG.NodeTypes where
 
-import Control.DeepSeq (NFData)
+import Control.DeepSeq
 import qualified Data.Text as T
-import GHC.Generics (Generic)
-import Language.C.Syntax.AST (CExpr, CExtDecl, CStat)
+import GHC.Generics
+import Language.C.Syntax.AST
 
 data NodeType
   = CFGExpr CExpr

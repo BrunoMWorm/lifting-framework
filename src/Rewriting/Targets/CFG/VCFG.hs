@@ -1,31 +1,21 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# HLINT ignore "Use newtype instead of data" #-}
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Rewriting.Targets.CFG.VCFG where
 
-import Control.DeepSeq (NFData (..))
-import Control.Exception (assert)
+import Control.DeepSeq
+import Control.Exception
 import qualified Data.Multimap as M
 import qualified Data.Text as T
-import Debug.Trace ()
-import GHC.Generics (Generic)
-import Language.C.Syntax.AST ()
+import Debug.Trace
+import GHC.Generics
+import Language.C.Syntax.AST
 import qualified Rewriting.Targets.CFG.CFG as C
-import Rewriting.Targets.CFG.NodeTypes (NodeType (CFGDummy))
+import Rewriting.Targets.CFG.NodeTypes
 import Variability.VarLib
-  ( PresenceCondition,
-    Var (..),
-    fixCompleteness,
-    mkVars,
-    notPC,
-    truePC,
-    union,
-    (^|),
-  )
 
 lv2vl :: [Var a] -> Var [a]
 lv2vl = foldr (foo (:)) (pure [])
@@ -62,7 +52,7 @@ toShallowNode (n, pc) =
           <*> ss
    in fixCompleteness dummyCNode d
 
-data CFG = CFG
+newtype CFG = CFG
   { nodes :: M.ListMultimap Int (CFGNode, PresenceCondition)
   }
 

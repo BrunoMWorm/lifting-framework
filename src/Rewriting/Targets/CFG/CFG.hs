@@ -1,18 +1,15 @@
 {-# LANGUAGE DeriveAnyClass #-}
-{-# HLINT ignore "Use newtype instead of data" #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE InstanceSigs #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Rewriting.Targets.CFG.CFG where
 
-import Control.DeepSeq (NFData (rnf))
+import Control.DeepSeq
 import qualified Data.List as L
 import qualified Data.Multimap as M
 import qualified Data.Text as T
-import GHC.Generics (Generic)
-import Language.C.Syntax.AST ()
-import Rewriting.Targets.CFG.NodeTypes (NodeType)
+import GHC.Generics
+import Rewriting.Targets.CFG.NodeTypes
 
 data CFGNode = CFGNode
   { _nID :: Int,
@@ -24,7 +21,7 @@ data CFGNode = CFGNode
   }
   deriving (Generic, NFData)
 
-data CFG = CFG
+newtype CFG = CFG
   { nodes :: M.ListMultimap Int CFGNode
   }
 

@@ -29,11 +29,6 @@ library
         Variability.VarLib
         Variability.VarTransformer
 
-    other-extensions:
-        InstanceSigs TupleSections FlexibleInstances LambdaCase
-        MultiParamTypeClasses PatternSynonyms CPP
-        GeneralizedNewtypeDeriving OverlappingInstances MagicHash
-
     build-depends:
         base >= 4.12.0.0 && < 4.19.0.0,
         array > 0.4.0.0 && < 0.6.0.0,

@@ -1,47 +1,13 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Rewriting.Rules.RewriteScript where
 
-import Data.Data (Data (toConstr))
-import Data.List (intercalate)
-import qualified Data.String
-import Debug.Trace (trace)
+import Data.Data
+import Debug.Trace
 import qualified GHC.Paths
 import Retrie
-  ( Annotated (astA),
-    AnnotatedHsExpr,
-    Context (ctxtBinders),
-    GRHS (GRHS),
-    GRHSs (grhssGRHSs),
-    GenLocated (L),
-    GhcPs,
-    HoleVal (HoleExpr),
-    HsExpr (HsApp, HsIf, HsLam, HsLit, HsOverLit, HsPar, HsVar, OpApp),
-    HsLit,
-    HsOverLit (ol_val),
-    Match (m_grhss, m_pats),
-    MatchGroup (MG),
-    MatchResult (MatchResult, NoMatch),
-    MatchResultTransformer,
-    Outputable (ppr),
-    RewriteSpec (Adhoc),
-    apply,
-    extendSubst,
-    lookupSubst,
-    parseExpr,
-    parseRewrites,
-    runScript,
-    setRewriteTransformer,
-  )
-import Retrie.ExactPrint (exactPrint)
+import Retrie.ExactPrint
 import Rewriting.Rules.TermMapping
-  ( TermMapping,
-    initialMapping,
-    lookupTerm,
-  )
-import Text.Read (Lexeme (String))
 
 -- The entrypoint rule matches all expressions in the target module. All expressions
 -- are rewritten into their corresponding monadified versions.

@@ -1,21 +1,12 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-{-# HLINT ignore "Redundant lambda" #-}
-{-# HLINT ignore "Use guards" #-}
-{-# HLINT ignore "Avoid lambda" #-}
 module Rewriting.Targets.TokenCount.TokenCountMonadBoth where
 
-import Control.Monad.Trans.Class (MonadTrans (lift))
-import Control.Monad.Trans.State (StateT)
-import Memoization.Core.Memory (KeyValueArray)
-import Memoization.Core.State (State, runState)
+import Memoization.Core.Memory
+import Memoization.Core.State
 import Rewriting.Rules.MonadifiedFunctions
-  ( ifM,
-    monadifyBinaryEqOperator,
-    monadifyBinaryNumOperator,
-  )
-import Variability.VarLib (PresenceCondition, Var (Var), mkPCVar, mkVar, notPC, (/\))
-import Variability.VarTransformer (VarT (VarT), runVarT)
+import Variability.VarLib
+import Variability.VarTransformer
 
 tokenCount :: (Monad d) => d ([Int] -> d Int)
 tokenCount =
@@ -43,12 +34,6 @@ tokenCount =
 
 (<@>) :: (Monad m) => m (a -> m b) -> m a -> m b
 fm <@> xm = fm >>= (xm >>=)
-
-(<#>) :: (Monad m) => m (a -> m b) -> m a -> m b
-fm <#> xm = do
-  f <- fm
-  x <- xm
-  f x
 
 propA :: PresenceCondition
 propA = mkPCVar "A"

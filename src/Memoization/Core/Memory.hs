@@ -1,14 +1,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
-{-# HLINT ignore "Use >>" #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Memoization.Core.Memory where
 
-import Debug.Trace ()
-import Memoization.Core.State (State (State, runState))
+import Memoization.Core.State
 
 class KeyMemory k v m where
   mlookup :: k -> State m (Maybe v)
@@ -31,5 +28,5 @@ retrieveOrRun x t =
   mlookup x
     >>= ( \case
             Just v -> return v
-            Nothing -> t () >>= (\v -> mupdate x v >>= \_ -> return v)
+            Nothing -> t () >>= (\v -> mupdate x v >> return v)
         )

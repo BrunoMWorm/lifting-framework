@@ -1,6 +1,6 @@
 module Rewriting.Rules.TermMapping where
 
-import Data.Maybe (listToMaybe)
+import Data.Maybe
 
 -- First try: lets store only String-based monadified expressions in our
 -- term mapping.

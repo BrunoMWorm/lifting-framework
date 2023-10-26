@@ -1,7 +1,6 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 {-# HLINT ignore "Redundant lambda" #-}
-{-# HLINT ignore "Use guards" #-}
 module Rewriting.Targets.TokenCount.TokenCount where
 
 tokenCount :: [Int] -> Int

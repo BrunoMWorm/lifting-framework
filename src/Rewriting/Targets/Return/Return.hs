@@ -1,17 +1,8 @@
 module Rewriting.Targets.Return.Return where
 
-import Data.Maybe ()
-import Debug.Trace ()
-import Language.C.Syntax.AST (CStatement (CBreak, CReturn))
+import Language.C.Syntax.AST
 import Rewriting.Targets.CFG.CFG
-  ( CFG,
-    CFGNode (ast, _nID),
-    _nodes,
-    _succs,
-  )
 import Rewriting.Targets.CFG.NodeTypes
-  ( NodeType (CFGDecl, CFGFuncRoot, CFGStat),
-  )
 
 find :: Int -> [Int] -> Bool
 find n _ns =
