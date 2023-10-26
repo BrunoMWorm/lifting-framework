@@ -1,8 +1,7 @@
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Rewriting.Targets.CFG.VCFG where
 
@@ -55,15 +54,17 @@ toShallowNode (n, pc) =
 newtype CFG = CFG
   { nodes :: M.ListMultimap Int (CFGNode, PresenceCondition)
   }
+  deriving (Show)
 
 instance NFData CFG where
+  rnf :: CFG -> ()
   rnf n = n `seq` (M.toList . nodes) n `seq` ()
 
 _nodes :: CFG -> [(CFGNode, PresenceCondition)]
 _nodes cfg = (map snd . M.toList) $ nodes cfg
 
 mkShallowCFG :: [C.CFGNode] -> C.CFG
-mkShallowCFG ns = C.CFG $! foldr (\n m -> M.append (C._nID n) n m) M.empty ns
+mkShallowCFG ns = C.CFG $ foldr (\n m -> M.append (C._nID n) n m) M.empty ns
 
 mkShallowCFG' :: Var [C.CFGNode] -> Var C.CFG
 mkShallowCFG' ns@(Var ns') =
@@ -71,10 +72,10 @@ mkShallowCFG' ns@(Var ns') =
 
 toShallowCFG :: CFG -> Var C.CFG
 toShallowCFG c =
-  let !ns = _nodes c
-      !ns' = map toShallowNode ns
-      !vl@(Var vl') = lv2vl ns'
-      !ret = mkShallowCFG' vl
+  let ns = _nodes c
+      ns' = map toShallowNode ns
+      vl@(Var vl') = lv2vl ns'
+      ret = mkShallowCFG' vl
    in ret
 
 _succs' :: Var CFG -> Var CFGNode -> [Var CFGNode]

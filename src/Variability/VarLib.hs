@@ -12,6 +12,10 @@ import qualified Data.List as L
 import GHC.Generics (Generic)
 import GHC.IO (unsafePerformIO)
 import GHC.StableName (makeStableName)
+import Text.Parsec
+import Text.Parsec.Expr
+import Text.Parsec.Text
+import Text.Parsec.Token
 
 -- Context structures for storing DD values with their respective names
 pc2string :: HashTable DDNode String
@@ -21,6 +25,10 @@ pc2string = unsafePerformIO H.new
 var2index :: HashTable String Int
 {-# NOINLINE var2index #-}
 var2index = unsafePerformIO H.new
+
+getVars :: PresenceCondition -> IO [(String, Int)]
+getVars _ = do
+  H.toList var2index
 
 lookupPC :: DDNode -> IO (Maybe String)
 lookupPC = H.lookup pc2string
@@ -224,6 +232,11 @@ definedAt (Var xs) = disj pcs
 
 undefinedAt :: Var t -> PresenceCondition
 undefinedAt = notPC . definedAt
+
+index :: Var t -> PresenceCondition -> [t]
+index (Var v) pc = map fst v'
+  where
+    v' = filter (\(x', pc') -> sat (pc /\ pc')) v
 
 -- Completeness and Disjointness Invariants
 disjInv :: Var t -> Bool
